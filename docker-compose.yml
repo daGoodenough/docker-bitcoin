@@ -1,20 +1,22 @@
-version: '3'
+version: "3"
 
 services:
-    bitcoind:
-        build: ./bitcoind
-        volumes:
-            - "bitcoin-data:/data"
-        networks:
-            - bitcoin
-        stdin_open: true
-        tty: true
-        ports:
-            - "8332:8332"
-            - "8333:8333"
+  bitcoind:
+    image: bitcoind
+    container_name: bitcoind
+    volumes:
+      - bitcoin-data:/data
+      - ./bitcoind/bitcoin.conf:/root/.bitcoin/bitcoin.conf
+    networks:
+      - bitcoin
+    stdin_open: true
+    tty: true
+    ports:
+      - "8332:8332"
+      - "8333:8333"
 
 volumes:
-    bitcoin-data:
+  bitcoin-data:
 
 networks:
-    bitcoin:
+  bitcoin:

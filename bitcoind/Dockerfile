@@ -36,16 +36,34 @@ RUN echo "*** release version: `cat ./release_version` ***"
 # Clone source repo into bitcoin directory
 RUN git clone https://github.com/bitcoin/bitcoin.git --branch `cat ../release_version` --depth 1
 
+RUN apt-get update && apt-get install -y \
+   gnupg2 \
+   libzmq3-dev \
+   libsnappy-dev \
+   wget \
+   tar
+
+WORKDIR /root
+
+COPY install_leveldb.sh ./
+
+RUN chmod +x install_leveldb.sh && \
+   ./install_leveldb.sh
+
+RUN yes | apt-get install libdb++-dev 
+# libsqlite3-dev
 
 # Install latest release from cloned repo
- WORKDIR bitcoin
+ WORKDIR /bitcoin
  RUN ./autogen.sh \
     && ./configure CFLAGS="-Os" CXXFLAGS="-Os" \
-       --disable-wallet \
        --without-gui \
        --without-miniupnpc \
+       --enable-wallet \
        --disable-tests \
        --disable-bench \
+       --with-incompatible-bdb \
+      #  --with-sqlite \
     && make \
     && strip src/bitcoind src/bitcoin-cli src/bitcoin-tx \
     && make install
@@ -62,4 +80,4 @@ RUN git clone https://github.com/bitcoin/bitcoin.git --branch `cat ../release_ve
  COPY bitcoin.conf "$CONFIG_FILE"
  
  
- CMD bitcoind -printtoconsole -conf="$CONFIG_FILE" -datadir="$DATA_DIR"
+ CMD bitcoind -zmqpubhashtx=tcp://127.0.0.1:30001 -zmqpubhashblock=tcp://127.0.0.1:30001 -printtoconsole -conf="$CONFIG_FILE" -datadir="$DATA_DIR"
